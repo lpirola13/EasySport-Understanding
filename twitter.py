@@ -9,7 +9,7 @@ import argparse
 import requests
 s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
 
-
+# ciao bellissimo
 def get_tweet_id_text(item):
     text = item['text'].replace("\n", " ")
     for mention in item['entities']['user_mentions']:
