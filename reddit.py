@@ -1,8 +1,8 @@
 
 import praw
 from datetime import datetime
-import sparql
-import spotlight
+import sparql #INSTALL sparql-client
+import spotlight #INSTALL pyspotlight
 import emoji
 import re
 import time
