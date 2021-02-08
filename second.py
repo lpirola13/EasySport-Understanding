@@ -33,7 +33,6 @@ def persist(sport, uri, name, abstract, type):
 
 
 def query_dbpedia(uri):
-    time.sleep(0.1)
     statement = ('select ?name ?abstract where {'
                  'OPTIONAL {<' + uri + '> foaf:name ?name.}.'
                                        'OPTIONAL {<' + uri + '> dbo:abstract ?abstract.}.'
@@ -78,7 +77,7 @@ def annotate_dbpedia(text, confidence, sport):
                 annotations_list.append(name)
             # Memorizzo l'entità identificata nel DB
             persist(sport, uri.lower(), name, abstract, type)
-    except spotlight.SpotlightException as error:
+    except (spotlight.SpotlightException, requests.exceptions.HTTPError) as error:
         print("DBPEDIA ERROR: {}".format(error))
     return text, annotations_list
 
@@ -117,7 +116,7 @@ def annotate_dandelion(text, confidence, sport):
                 annotations_list.append(name)
             # Memorizzo l'entità identificata nel DB
             persist(sport, uri.lower(), name, abstract, type)
-    except DandelionException as error:
+    except (DandelionException, requests.exceptions.HTTPError) as error:
         print("DANDELION ERROR: {}".format(error))
     return text, annotations_list
 
@@ -144,69 +143,45 @@ def annotate(text, sport, method, confidence):
         text, annotations = annotate_dandelion(text, confidence, sport)
     # Tokenization del testo e rimozione stop words e punctuation
     print("ANN:   {}".format(text), end='')
-    lemmas = [wnl.lemmatize(str(token)).lower() for token in nlp(text) if not token.is_stop and not token.is_punct]
-    tokens = [lemma for lemma in lemmas if len(str(lemma)) > 1]
-    text = " ".join(str(token) for token in tokens)
-    return text, annotations
+    return text.lower(), annotations
 
 
-def main(path_from, path_to, row_from, row_to, sport, method, confidence):
+def main(path_from, path_to, row_from, sport, confidence, count_dandelion):
     if sport == "basketball":
         BasketballEntity.init()
     elif sport == "soccer":
         SoccerEntity.init()
     with open(path_from, 'r') as from_file, open(path_to, 'a') as to_file:
-        chunk = from_file.readlines()[row_from:row_to]
+        chunk = from_file.readlines()[row_from:50000]
         for row in chunk:
-            if len(row) > 2:
+            if count_dandelion < 1000:
                 print("ROW:   {}".format(row_from))
                 print("TEXT:  {}".format(row), end='')
-                text, annotations = annotate(row, sport=sport, method=method, confidence=confidence)
+                words = ['ball', 'crossbar', 'free kick', 'referee', 'yellow card', 'red card', 'striker', 'pitch', 'wing',
+                         'forward', 'winger', 'penalty', 'offside', 'goalkeeper', 'midfielder', 'defender', 'assist']
+                if any(word in row.lower() for word in words):
+                    text, annotations = annotate(row, sport=sport, method='dandelion', confidence=confidence)
+                    count_dandelion += 1
+                else:
+                    text, annotations = annotate(row, sport=sport, method='dbpedia', confidence=confidence)
                 print("FINAL: {}".format(text))
-                print("\tANNOTATIONS: {}\n".format(annotations))
-                to_file.write(text + '\n')
+                print("\tANNOTATIONS: {}".format(annotations))
+                print("DANDELION REQUESTS: {}\n".format(count_dandelion))
+                to_file.write(text)
                 row_from += 1
+            else:
+                print("LAST ROW: {}".format(row_from))
+                exit(0)
 
 
 if __name__ == '__main__':
-    path_from = 'corpus-soccer.txt'
-    path_to = 'corpus-soccer-clean.txt'
-    row_from = 0  # uguale al precedente
-    row_to = 2000
-    sport = 'basketball'
-    method = 'dbpedia'
-    confidence = 0.6
+    path_from = input(f'input file: ')
+    path_to = input(f'output file: ')
+    row_from = input(f'row from: ')
+    sport = input(f'sport: ')
+    confidence = input(f'confidence: ')
+    count_dandelion = input(f'dandelion requests: ')
     datatxt = DataTXT(token='67fae4be6482439894e8759a9eb87b45')
     s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
     nlp = spacy.load("en_core_web_sm")
-    # Per evitare di splittare su (
-    prefixes = list(nlp.Defaults.prefixes)
-    prefixes.remove('\\(')
-    prefix_regex = spacy.util.compile_prefix_regex(prefixes)
-    nlp.tokenizer.prefix_search = prefix_regex.search
-    # Per evitare di splittare su )
-    suffixes = list(nlp.Defaults.suffixes)
-    suffixes.remove('\\)')
-    suffix_regex = spacy.util.compile_suffix_regex(suffixes)
-    nlp.tokenizer.suffix_search = suffix_regex.search
-    # Considera come unico token due parole unite da hypen
-    infixes = (
-            LIST_ELLIPSES
-            + LIST_ICONS
-            + [
-                # r"(?<=[0-9])[+\-\*^](?=[0-9-])",  Originale
-                r"(?<=[0-9])[+\*^](?=[0-9-])",  # Modificata
-                r"(?<=[{al}{q}])\.(?=[{au}{q}])".format(
-                    al=ALPHA_LOWER, au=ALPHA_UPPER, q=CONCAT_QUOTES
-                ),
-                r"(?<=[{a}]),(?=[{a}])".format(a=ALPHA),
-                r"(?<=[{a}])(?:{h})(?=[{a}])".format(a=ALPHA, h=HYPHENS),
-                r"(?<=[{a}0-9])[:<>/=](?=[{a}])".format(a=ALPHA),
-            ]
-    )
-    #nltk.download('wordnet')
-    # Create WordNetLemmatizer object
-    wnl = WordNetLemmatizer()
-    infix_re = compile_infix_regex(infixes)
-    nlp.tokenizer.infix_finditer = infix_re.finditer
-    main(path_from, path_to, row_from, row_to, sport, method, confidence)
+    main(str(path_from), str(path_to), int(row_from), str(sport), confidence, int(count_dandelion))

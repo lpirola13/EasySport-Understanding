@@ -2,6 +2,7 @@ import re
 import time
 from urllib.parse import unquote
 
+import emoji
 import requests
 import spacy
 import sparql
@@ -136,6 +137,8 @@ def annotate(text, sport, method, confidence):
     text = " ".join(str(token) for token in tokens)
     return text, annotations
 
+
+
 datatxt = DataTXT(token='67fae4be6482439894e8759a9eb87b45')
 s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
 nlp = spacy.load("en_core_web_sm")
@@ -216,12 +219,127 @@ SoccerEntity.init()
 # EPL
 # text = "Tottenham Hotspur Manchester City EPL"
 
-# point guard, shooting guard, center, pivot, playmaker, small forward, power forward, big forward (anche acronimi)
-# flagrant, ball, ring (VITTORIA), basket, dunk, block, guard, rebound, playoff, overtime
+# shooting guard, center, forward,
+# flagrant, ring, basket, block, guard, rebound, steal, conference
 
-s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
-text, annotations = annotate(text, 'football', 'dandelion', 0.7)
-print('\n'+text)
+
+# words = ['ball', 'crossbar', 'free kick', 'referee', 'yellow card', 'red card', 'goal', 'striker', 'forward', 'winger', 'penalty', 'offside', 'goalkeeper', 'midfielder', 'defender']
+# if any(word in text.lower() for word in words):
+#     text, annotations = annotate_dandelion(text, confidence, sport)
+# else:
+#     text, annotations = annotate_dbpedia(text, confidence, sport)
+
+#text = preprocessing("Dean Smith Lampard Time luxury given football year get play offs Derby Chelsea get FA Cup final UCL qualification transfer ban day ago league Technical director ex teammate")
+#print(text)
+def preprocessing(text):
+    # Rimuovo i newline
+    text = text.replace("\n", "")
+    # Rimuovo i link
+    text = re.sub(r'http\S+', '', text)
+    text = re.sub(r'www\S+', '', text)
+    # Sostituisco le emoji con i loro aliases
+    text = emoji.demojize(text)
+    # Rimuovo i due punti prima e dopo dell'alias
+    text = re.sub(r'(:)(.*?)(:)', r' \2 ', text)
+    # Rimuovo l'underscore se gli alias sono composti da più parole
+    text = re.sub(r'_', ' ', text)
+    # Rimuovo lo slash
+    text = re.sub(r'/', ' ', text)
+    # Rimuovo |
+    text = re.sub(r'\|', ' ', text)
+    # Rimuovo le parentesi dal testo
+    text = re.sub(r'(\()([^)]+)(\))', '\g<2>', text)
+    # Sostituisco ']' con '] '
+    text = text.replace(']', '] ')
+    # Rimuovo i numeri dal testo
+    text = re.sub(r'(?<![a-zA-Z]-)(\b\d+\b)', ' ', text)
+    # Rimuovo minuti / millioni
+    text = re.sub(r'\d+m\b', ' ', text)
+    # Rimuovo posizioni
+    text = re.sub(r'\d+th\b', ' ', text)
+    text = re.sub(r'\d+st\b', ' ', text)
+    text = re.sub(r'\d+nd\b', ' ', text)
+    text = re.sub(r'\d+rd\b', ' ', text)
+    # Rimuovo ore
+    text = re.sub(r'\d+h\b', ' ', text)
+    text = re.sub(r'\d+am\b', ' ', text)
+    text = re.sub(r'\d+pm\b', ' ', text)
+    text = re.sub(r'(\b\d+h\d+\b)', ' ', text)
+    # Rimouvo anni
+    text = re.sub(r'\d+s\b', ' ', text)
+    # Sostituisco statistiche
+    text = re.sub(r'(\d+)(ppg)', ' ppg', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)(pt(s?))', ' pts', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)(reb(s?))', ' rebs', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)(ast(s?))', ' asts', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)(stl(s?))', ' stls', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)(blk(s?))', ' blks', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo EPL
+    text = re.sub(r'(\bEPL\b)', 'English Premier League', text)
+    # Sostituisco acronimo PL
+    text = re.sub(r'(\bPL\b)', 'Premier League', text)
+    # Sostituisco acronimo VAR
+    text = re.sub(r'(\bVAR\b)', 'Video Assistant Referee', text)
+    # Sostituisco acronimo UCL
+    text = re.sub(r'(\bUCL\b)', 'Uefa Champions League', text)
+    # Sostituisco acronimo CL
+    text = re.sub(r'(\bCL\b)', 'Champions League', text)
+    # Sostituisco acronimo UEL
+    text = re.sub(r'(\bUEL\b)', 'Uefa Europa League', text)
+    # Sostituisco acronimo EL
+    text = re.sub(r'(\bEL\b)', 'Europa League', text)
+    # Sostituisco acronimo PPG
+    text = re.sub(r'(\bppg\b)', 'points per game', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo PTS
+    text = re.sub(r'(\bpt(s?)\b)', 'point', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo REBS
+    text = re.sub(r'(\breb(s?)\b)', 'rebound', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo ASTS
+    text = re.sub(r'(\bast(s?)\b)', 'assist', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bassts\b)', 'assist', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo STL
+    text = re.sub(r'(\bstl(s?)\b)', 'steal', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo BLK
+    text = re.sub(r'(\bblk(s?)\b)', 'block', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo FG
+    text = re.sub(r'(\bFG\b)', 'field goal', text)
+    # Sostituisco acronimo FT
+    text = re.sub(r'(\bFT\b)', 'free throw', text, flags=re.IGNORECASE)
+    # Rimuovo highlight(s)
+    text = re.sub(r'(\bhighlight(s?)\b)', '', text, flags=re.IGNORECASE)
+    # Rimuovo (pre/post)(-)(match thread)
+    text = re.sub(r'(\bpost\b( ?))?(\bpre\b( ?))?(-?)(\bmatch\b) (\bthread\b)', '', text, flags=re.IGNORECASE)
+    # Rimuovo (pre/post)(-)(game thread)
+    text = re.sub(r'(\bpost\b( ?))?(\bpre\b( ?))?(-?)(\bgame\b) (\bthread\b)', '', text, flags=re.IGNORECASE)
+    # Rimuovo (daily)(discussion)(thread)
+    text = re.sub(r'(\bdaily\b( ?))?(\bdiscussion(s)?\b)(( ?)\bthread\b)?', '', text, flags=re.IGNORECASE)
+    # Rimuovo breaking
+    text = re.sub(r'(\bbreaking\b)', '', text, flags=re.IGNORECASE)
+    # Rimuovo free talk friday
+    text = re.sub(r'(\bfree talk friday\b)', '', text, flags=re.IGNORECASE)
+    # Rimuovo VIDEO
+    text = re.sub(r'(\bVIDEO\b)', '', text)
+    # Rimuovo +
+    text = re.sub(r'(\+)', '', text)
+    # Rimuovo le valute
+    text = text.replace('£', '')
+    text = text.replace('$', '')
+    text = text.replace('€', '')
+    # Rimuovo i doppi spazi
+    text = re.sub(r' {2,}', ' ', text)
+    lemmas = [wnl.lemmatize(str(token)) for token in nlp(text) if not token.is_stop and not token.is_punct]
+    text = " ".join(str(token) for token in lemmas if token != 'v')
+    text = text.replace('Serie', 'Serie A')
+    return text
+
+text = "Tottenham 0 - [1] Liverpool - Roberto Firmino 45+4'"
+print(preprocessing(text))
+
+
+
+#s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
+#text, annotations = annotate(text, 'basketball', 'dandelion', 0.7)
+#print('\n'+text)
 
 
 
