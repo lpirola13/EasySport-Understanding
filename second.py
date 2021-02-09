@@ -142,46 +142,61 @@ def annotate(text, sport, method, confidence):
     elif method == 'dandelion':
         text, annotations = annotate_dandelion(text, confidence, sport)
     # Tokenization del testo e rimozione stop words e punctuation
-    print("ANN:   {}".format(text), end='')
-    return text.lower(), annotations
+    tokens = [lemmatizer.lemmatize(str(token)) for token in nlp(text)]
+    lemmatized_text = " ".join(token for token in tokens)
+    print("ANN:       {}".format(text), end='')
+    print("ANN-LEMMA: {}".format(lemmatized_text), end='')
+    return text.lower(), lemmatized_text.lower(), annotations
 
 
-def main(path_from, path_to, row_from, sport, confidence, count_dandelion):
+def main(path_from, path_to, path_to_lemma, row_from, sport, confidence, count_dandelion):
     if sport == "basketball":
         BasketballEntity.init()
     elif sport == "soccer":
         SoccerEntity.init()
-    with open(path_from, 'r') as from_file, open(path_to, 'a') as to_file:
+    with open(path_from, 'r') as from_file, open(path_to, 'a') as to_file, open(path_to_lemma, 'a') as to_file_lemma:
         chunk = from_file.readlines()[row_from:50000]
         for row in chunk:
             if count_dandelion < 1000:
-                print("ROW:   {}".format(row_from))
-                print("TEXT:  {}".format(row), end='')
+                print("ROW:       {}".format(row_from))
+                print("TEXT:      {}".format(row), end='')
                 words = ['ball', 'crossbar', 'free kick', 'referee', 'yellow card', 'red card', 'striker', 'pitch', 'wing',
-                         'forward', 'winger', 'penalty', 'offside', 'goalkeeper', 'midfielder', 'defender', 'assist']
+                         'forward', 'winger', 'penalty', 'offside', 'goalkeeper', 'midfielder', 'defender', 'assist',
+                         'flagrant', 'ring', 'basket', 'block', 'guard', 'rebound', 'steal', 'conference', 'field']
                 if any(word in row.lower() for word in words):
-                    text, annotations = annotate(row, sport=sport, method='dandelion', confidence=confidence)
+                    text, lemmatized_text, annotations = annotate(row, sport=sport, method='dandelion', confidence=confidence)
                     count_dandelion += 1
                 else:
-                    text, annotations = annotate(row, sport=sport, method='dbpedia', confidence=confidence)
-                print("FINAL: {}".format(text))
+                    text, lemmatized_text, annotations = annotate(row, sport=sport, method='dbpedia', confidence=confidence)
+                print("FINAL:     {}".format(text))
                 print("\tANNOTATIONS: {}".format(annotations))
                 print("DANDELION REQUESTS: {}\n".format(count_dandelion))
                 to_file.write(text)
+                to_file_lemma.write(lemmatized_text)
                 row_from += 1
             else:
                 print("LAST ROW: {}".format(row_from))
                 exit(0)
 
+# input file:
+# output file: corpus-soccer-xxxx-clean.txt / corpus-basketball-xxxx-clean.txt
+# output file lemma: corpus-soccer-xxxx-lemma.txt / corpus-basketball-xxxx-lemma.txt
+# row from: ultima riga quando si interrompe
+# sport: basketball/soccer
+# condifence: 0.6
+# dandelion requests: 0
 
 if __name__ == '__main__':
     path_from = input(f'input file: ')
     path_to = input(f'output file: ')
+    path_to_lemma = input(f'output file lemma: ')
     row_from = input(f'row from: ')
     sport = input(f'sport: ')
     confidence = input(f'confidence: ')
     count_dandelion = input(f'dandelion requests: ')
-    datatxt = DataTXT(token='67fae4be6482439894e8759a9eb87b45')
+    token = input(f'token: ')
+    datatxt = DataTXT(token=token)
     s = sparql.Service('http://dbpedia.org/sparql', qs_encoding='utf-8')
     nlp = spacy.load("en_core_web_sm")
-    main(str(path_from), str(path_to), int(row_from), str(sport), confidence, int(count_dandelion))
+    lemmatizer = WordNetLemmatizer()
+    main(str(path_from), str(path_to), str(path_to_lemma), int(row_from), str(sport), confidence, int(count_dandelion))

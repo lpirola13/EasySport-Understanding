@@ -45,7 +45,6 @@ def preprocessing(text):
     # Rimuovo ore
     text = re.sub(r'\d+h\b', ' ', text)
     text = re.sub(r'\d+am\b', ' ', text)
-    text = re.sub(r'\d+pm\b', ' ', text)
     text = re.sub(r'(\b\d+h\d+\b)', ' ', text)
     # Rimouvo anni
     text = re.sub(r'\d+s\b', ' ', text)
@@ -70,23 +69,47 @@ def preprocessing(text):
     text = re.sub(r'(\bUEL\b)', 'Uefa Europa League', text)
     # Sostituisco acronimo EL
     text = re.sub(r'(\bEL\b)', 'Europa League', text)
+    # Sostituisco acronimo SG
+    text = re.sub(r'(\bsg\b)', 'shooting guard', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo G
+    text = re.sub(r'(\bg\b)', 'shooting guard', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo C
+    text = re.sub(r'(\bc\b)', 'center', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo PF
+    text = re.sub(r'(\bpf\b)', 'power forward', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo SF
+    text = re.sub(r'(\bsf\b)', 'small forward', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo F
+    text = re.sub(r'(\bf\b)', 'forward', text, flags=re.IGNORECASE)
     # Sostituisco acronimo PPG
     text = re.sub(r'(\bppg\b)', 'points per game', text, flags=re.IGNORECASE)
     # Sostituisco acronimo PTS
-    text = re.sub(r'(\bpt(s?)\b)', 'points', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bpt(s?)\b)', 'point', text, flags=re.IGNORECASE)
     # Sostituisco acronimo REBS
-    text = re.sub(r'(\breb(s?)\b)', 'rebounds', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\breb(s?)\b)', 'rebound', text, flags=re.IGNORECASE)
     # Sostituisco acronimo ASTS
-    text = re.sub(r'(\bast(s?)\b)', 'assists', text, flags=re.IGNORECASE)
-    text = re.sub(r'(\bassts\b)', 'assists', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bast(s?)\b)', 'assist', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bassts\b)', 'assist', text, flags=re.IGNORECASE)
     # Sostituisco acronimo STL
-    text = re.sub(r'(\bstl(s?)\b)', 'steals', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bstl(s?)\b)', 'steal', text, flags=re.IGNORECASE)
     # Sostituisco acronimo BLK
-    text = re.sub(r'(\bblk(s?)\b)', 'blocks', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\bblk(s?)\b)', 'block', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo FGM
+    text = re.sub(r'(\bFGM\b)', 'field goal made', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo FGA
+    text = re.sub(r'(\bFGA\b)', 'field goal attempted', text, flags=re.IGNORECASE)
     # Sostituisco acronimo FG
-    text = re.sub(r'(\bFG\b)', 'field goal', text)
+    text = re.sub(r'(\bFG\b)', 'field goal', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo FTM
+    text = re.sub(r'(\bFTM\b)', 'free throw made', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo FTA
+    text = re.sub(r'(\bFTA\b)', 'free throw attempted', text, flags=re.IGNORECASE)
     # Sostituisco acronimo FT
     text = re.sub(r'(\bFT\b)', 'free throw', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo 3PM
+    text = re.sub(r'(\bPM\b)', 'three point made', text, flags=re.IGNORECASE)
+    # Sostituisco acronimo 3PA
+    text = re.sub(r'(\bPA\b)', 'three point attempted', text, flags=re.IGNORECASE)
     # Rimuovo highlight(s)
     text = re.sub(r'(\bhighlight(s?)\b)', '', text, flags=re.IGNORECASE)
     # Rimuovo (pre/post)(-)(match thread)
@@ -167,6 +190,49 @@ def start_scraping(subreddit, months, filename, limit, from_date):
                 total = total + count
                 print("\ttotal submissions: {}".format(total))
                 time.sleep(10)
+
+# Lorenzo
+
+# subreddit: soccer
+# from: 31/07/2016
+# months: 12
+# output filename: soccer-2016.txt
+# limit: 600
+
+# subreddit: nba
+# from: 31/07/2016
+# months: 12
+# output filename: basketball-2016.txt
+# limit: 600
+
+# Matteo
+
+# subreddit: soccer
+# from: 31/07/2018
+# months: 12
+# output filename: soccer-2018.txt
+# limit: 600
+
+# subreddit: nba
+# from: 31/07/2018
+# months: 12
+# output filename: basketball-2018.txt
+# limit: 600
+
+# Youssef
+
+# subreddit: soccer
+# from: 31/08/2020
+# months: 13
+# output filename: soccer-2020.txt
+# limit: 550
+
+# subreddit: nba
+# from: 31/11/2020
+# months: 14
+# output filename: basketball-2020.txt
+# limit: 550
+
 
 
 if __name__ == '__main__':
