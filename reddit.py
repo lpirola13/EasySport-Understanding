@@ -15,7 +15,7 @@ import sparql
 import spotlight
 import time
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm-3.0.0")
 datatxt = DataTXT(token='67fae4be6482439894e8759a9eb87b45')
 
 infixes = (
@@ -223,5 +223,5 @@ def main(sport, subreddit, limit):
 if __name__ == '__main__':
     sport = "basketball"
     subreddit = 'nba'
-    limit = 200
+    limit = 2
     main(sport, subreddit, limit)
