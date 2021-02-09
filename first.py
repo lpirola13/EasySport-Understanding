@@ -182,7 +182,7 @@ if __name__ == '__main__':
     )
     wnl = WordNetLemmatizer()
     api = PushshiftAPI(reddit)
-    nlp = spacy.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm-3.0.0")
     infixes = (
             LIST_ELLIPSES
             + LIST_ICONS
