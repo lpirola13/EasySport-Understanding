@@ -5,7 +5,7 @@
 
 
 <div align="justify">
-The aim of the project was to create an application where people can improve their knowledge about sports exploiting common knowledge retrieved from the web. This knwoledge was based on word embeddings built from Reddit's submissions and word embeddings alignment techniques.
+Wish you could follow a new sport but don't know enough about it? This application allows you to expand your knowledge by using analogies with sports you are familiar with. These analogies are calculated by aligning word embeddings spaces obtained from different text corpora (one for each sport).
 </div>
 
 ## Requirements
